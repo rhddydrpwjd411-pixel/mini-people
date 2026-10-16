@@ -1,26 +1,63 @@
 @import "tailwindcss";
 
+/*
+ * 마지막 광장 — 팔레트
+ *
+ * 다크 톤 기본. "광장"의 저녁 분위기 + 모여 앉아 한 기기를 보는 환경에서
+ * 눈이 편하다. (design.md §6)
+ *
+ * 🔴 찬/반 색에 파랑·빨강을 쓰지 않는다.
+ *    한국에서 그 두 색은 정당 색으로 읽힌다. 중립성이 제품의 신뢰 조건인데
+ *    (cps.md §3) 색이 진영을 암시하면 그 자리에서 무너진다.
+ *    진영과 무관한 청록(pro) / 호박(con) 을 쓴다.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --bg: #0d0f14;
+  --surface: #161a22;
+  --surface-2: #1e2430;
+  --border: #2a3140;
+  --text: #e8eaf0;
+  --muted: #98a1b3;
+  --accent: #d8b45c;      /* 광장의 램프빛 */
+  --pro: #3dd6b0;         /* 찬성 — 청록 */
+  --con: #f0b64a;         /* 반대 — 호박 */
+  --danger: #ff6b6b;
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-border: var(--border);
+  --color-text: var(--text);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-pro: var(--pro);
+  --color-con: var(--con);
+  --color-danger: var(--danger);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  color-scheme: dark;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-family: Pretendard, -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo",
+    "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+/* 한 기기를 여럿이 돌려본다 — 터치 타깃을 넓게 (design.md §6 원칙 1) */
+button {
+  min-height: 48px;
+  touch-action: manipulation;
+}
+
+/* 토큰 입력처럼 빠르게 연타하는 버튼에서 선택 하이라이트가 생기지 않게 */
+button,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
 }

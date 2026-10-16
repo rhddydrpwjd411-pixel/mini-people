@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
+import { AppError } from './errors'
 
 /**
  * 🔴 서버 전용 Supabase 클라이언트.
@@ -13,10 +14,21 @@ if (typeof window !== 'undefined') {
   throw new Error('lib/supabase.ts 는 서버에서만 import 할 수 있습니다.')
 }
 
+/**
+ * 설정 누락은 런타임 장애가 아니라 개발자 실수다. AppError 로 던져
+ * 원인(어떤 변수가 비었는지)이 화면까지 전달되게 한다. 변수 '이름'은
+ * 비밀이 아니고 .env.example 에 이미 적혀 있다.
+ *
+ * 일반 Error 로 던지면 handle() 이 "서버에서 문제가 발생했습니다"로 덮어버려
+ * 터미널을 봐야만 원인을 알 수 있다. 첫 세팅에서 가장 자주 밟는 함정이다.
+ */
 function required(name: string): string {
   const value = process.env[name]
   if (!value) {
-    throw new Error(`환경변수 ${name} 가 설정되지 않았습니다. .env.example 을 참고하세요.`)
+    throw new AppError(
+      'CONFIG_MISSING',
+      `환경변수 ${name} 가 비어 있습니다. .env.local 을 확인하세요 (.env.example 참고).`,
+    )
   }
   return value
 }

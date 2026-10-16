@@ -9,6 +9,7 @@ export type ErrorCode =
   | 'EVIDENCE_UNAVAILABLE'
   | 'RATE_LIMITED'
   | 'UNAUTHORIZED'
+  | 'CONFIG_MISSING'
   | 'INTERNAL'
 
 export const ERROR_STATUS: Record<ErrorCode, number> = {
@@ -21,6 +22,7 @@ export const ERROR_STATUS: Record<ErrorCode, number> = {
   EVIDENCE_UNAVAILABLE: 200, // 게임 흐름을 멈추지 않는다 (test.md A-13)
   RATE_LIMITED: 429,
   UNAUTHORIZED: 401,
+  CONFIG_MISSING: 500,
   INTERNAL: 500,
 }
 

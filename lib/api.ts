@@ -43,7 +43,7 @@ export async function readJson(request: Request): Promise<Record<string, unknown
 export function requireInt(value: unknown, field: string, min: number, max: number): number {
   const n = typeof value === 'number' ? value : Number(value)
   if (!Number.isInteger(n) || n < min || n > max) {
-    throw new AppError('INVALID_INPUT', `${field} 는 ${min}~${max} 사이의 정수여야 합니다.`)
+    throw new AppError('INVALID_INPUT', `${field}: ${min}~${max} 사이의 정수여야 합니다.`)
   }
   return n
 }
