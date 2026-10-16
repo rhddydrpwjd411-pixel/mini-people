@@ -126,7 +126,8 @@ DB: `meeple's Project` (njwpdnvzmariorbgfzry, ap-south-1) — 테이블 8 · RLS
 - [x] **1-10** `/setup` 인원 3~5 · 라운드 1~5 · 닉네임
   - [x] 🔴 닉네임을 서버로 보내지 않음 — **P-3** 구현
         (`lib/client/local.ts` 에만 저장, 요청 바디에 미포함)
-  - [ ] Network 탭 수동 확인 ← 1판 돌릴 때
+  - [x] 브라우저 실측 확인 — localStorage 에 닉네임 3명(민서·민영·민수)이 있는 상태에서
+        요청 바디는 `{"playerCount":4,"roundTotal":3}` 뿐, 닉네임 0건. 클릭 1번 = 요청 1번
 - [x] **1-11** `/play/[id]` 4단계 전환 (① 이슈 → ② 입장 → ③ 발언 → ④ 토큰)
   - [x] ③ 발언 화면은 정보량 최소 (cps 원칙 3)
   - [x] 각 단계에 "지금 할 일" 한 문장 상시 표시 (`NowDo`)
