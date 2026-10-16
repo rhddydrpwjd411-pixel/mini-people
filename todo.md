@@ -9,11 +9,12 @@
 **현재 Phase: P0 (기반)** · **다음 게이트: 10/23 1차 제품 검수 (D-7)**
 
 ```
-진행률  P0 ███████░░░ 5/7   P1 ███░░░░░░░ 4/15
+진행률  P0 █████████░ 6.5/7   P1 █████░░░░░ 8/15
 ```
 
 개발 환경: Node 24.20.0 · npm 11.19.0 · git 2.55.0 · Next 15.5.28 · Vitest 5.0.5
 테스트: **43개 통과** (`npm test`) · typecheck · lint 통과
+DB: `meeple's Project` (njwpdnvzmariorbgfzry, ap-south-1) — 테이블 8 · RLS 8 · 정책 0 · 활성 카드 20
 
 ---
 
@@ -21,30 +22,34 @@
 
 | 항목 | 누가 풀어야 하나 | 기한 |
 |---|---|---|
-| 🔴 **Supabase 프로젝트 생성** — 이게 없으면 1-5 이후(API·화면) 전체가 막힌다 | 개발 리드 | **즉시** |
+| 🔴 **`.env.local` 의 `SUPABASE_SERVICE_ROLE_KEY` 채우기** — 이게 비어 있으면 앱이 뜨지 않는다 | 개발 리드 | **즉시** |
 | **역할 분담 미정** — 전담 개발자 없음 (plan §9) | 팀 전체 | **10/17** |
 | Vercel 계정 연결 (0-6) | 개발 리드 | 10/18 |
+| 카드 20장 중립성 교차 확인 (사람이 읽어야 함) | 조원 1명 | 10/18 |
 | 5번째 조원 이름 확인 | 팀 전체 | 10/17 |
 | 캠페인 데이터 확보 경로 (유난무브먼트) | — | 12/1까지 |
 | 임팩트 설문 문항 확정 | 팀 전체 | 12/1까지 |
 
-### Supabase 막힘을 푸는 방법
+### service_role 키 채우는 방법
 
-1. [supabase.com](https://supabase.com) 에서 프로젝트 생성 (무료 티어)
-2. Settings → API 에서 `Project URL` 과 `service_role` 키 복사
-3. `.env.example` 을 복사해 `.env.local` 을 만들고 값 붙여넣기
-4. `supabase/migrations/0001_init.sql` → `0002_seed_cards.sql` 순서로 SQL Editor 에서 실행
-5. `select count(*) from issue_cards where status='active'` → **20** 이면 P0 완료
+1. Supabase 대시보드 → `meeple's Project` → **Project Settings → API Keys**
+2. **`service_role`** 의 값을 복사 (⚠️ `anon` 이 아니다)
+3. `.env.local` 의 `SUPABASE_SERVICE_ROLE_KEY=` 뒤에 붙여넣기
+4. `npm run dev` → http://localhost:3000
+
+> ⚠️ 이 키는 RLS를 우회한다. 채팅·슬랙·깃허브에 절대 붙여넣지 않는다.
+> `.env.local` 은 `.gitignore` 로 제외되어 있다 (확인됨).
 
 ---
 
-## P0 — 기반 (10/16 ~ 10/18) · 5/7
+## P0 — 기반 (10/16 ~ 10/18) · 6.5/7
 
 - [x] **0-1** Next.js 15 + TypeScript + Tailwind 초기화, 이 리포에 커밋
-- [~] **0-2** Supabase 프로젝트 생성 · `.env.local` · `.env.example` 작성
+- [~] **0-2** Supabase 프로젝트 · `.env.local` · `.env.example`
   - [x] `.env.example` 작성 (키 6개, `NEXT_PUBLIC_` 은 BASE_URL 하나뿐)
-  - [ ] ⛔ Supabase 프로젝트 생성 — **팀 계정 필요**
-  - [ ] ⛔ `.env.local` 값 채우기
+  - [x] Supabase 프로젝트 확인 — 기존 `meeple's Project` 사용 (새로 만들지 않음)
+  - [x] `.env.local` 생성 + `SUPABASE_URL` 채움
+  - [ ] ⛔ `SUPABASE_SERVICE_ROLE_KEY` 채우기 — **비밀 키라 직접 붙여넣어야 함**
 - [x] **0-3** 마이그레이션 `0001_init.sql` — 테이블 8 + enum 2 (design §2)
   - [x] `issue_cards` / `card_generation_runs`
   - [x] `game_sessions` / `session_rounds` / `round_stances` / `token_awards`
@@ -59,11 +64,21 @@
   - [x] 각 카드에 `pro_hint` · `con_hint` 둘 다 채움
   - [x] 정당·실존 인물 언급 0건
   - [ ] 전문 지식 없이 말할 수 있는 수준인지 **조원 1명이 교차 확인** ← 사람이 해야 함
-  - [ ] ⛔ DB 입력 (Supabase 생성 후)
+  - [x] DB 입력 완료 (`status='active'` 20장)
 - [ ] **0-6** ⛔ Vercel 연결 · Preview 배포 확인 — **팀 계정 필요**
 - [x] **0-7** Vitest 세팅 (`npm test` 동작, 43개 통과)
 
-**완료 조건**: `select count(*) from issue_cards where status='active'` → 20 (DB 생성 후 확인)
+**완료 조건**: `select count(*) from issue_cards where status='active'` → **20 ✅ 확인됨**
+
+### 추가 작업 — 문서에 없던 것
+
+- [x] **0-8** `0003_tx_functions.sql` — 원자성 보장 Postgres 함수 3개
+  - `supabase-js` 에 트랜잭션이 없어, TS 에서 쿼리를 나누면 중간 실패 시 데이터가 깨진다.
+    (라운드는 생겼는데 입장 배정이 비는 상태 등)
+  - `create_round_tx` — 라운드 + 입장 배정 + use_count 증가
+  - `replace_round_tokens` — 토큰 교체 (멱등)
+  - `finish_session_tx` — 결과 확정 (멱등)
+  - DB에서 직접 1판 시뮬레이션으로 검증 후 테스트 데이터 정리 완료
 
 ---
 
@@ -82,7 +97,7 @@
   - [x] `use_count` 낮은 것 우선 — D-2
   - [x] 🔴 `active`만 뽑기 — **D-3** (검수 안 된 카드 노출 금지)
   - [x] 카드 부족 시 throw — D-4 + `assertEnoughCards`
-  - [ ] ⛔ D-5 `use_count` 1 증가 — DB 연동 필요 (1-6에서)
+  - [x] D-5 `use_count` 1 증가 — `create_round_tx` 안에서 처리, DB 검증 완료 (0 → 1)
 - [x] **1-3** `lib/game/score.ts` 점수 집계
   - [x] `received` / `given`
   - [x] 🔴 `balance = min(received, given)` — **C-3 / C-4**
@@ -95,12 +110,15 @@
   - [x] 경계값 E-7 (`T == N`) · E-8 (`topShare == 0.5`)
   - [x] T=0 에서 0으로 나누기 없음 — E-2
 
-### API — ⛔ Supabase 프로젝트 생성 후 착수 (전부 DB 의존)
+### API — 코드 작성 완료. ⛔ service_role 키 채운 뒤 HTTP 레벨 재확인 필요
 
-- [ ] **1-5** `POST /api/sessions` · `GET /api/sessions/:id` — A-1~A-3, A-11~A-12
-- [ ] **1-6** `POST /api/sessions/:id/rounds` (카드 뽑기 + 입장 배정 원자적) — A-4, A-5
-- [ ] **1-7** 🔴 `POST /api/rounds/:id/tokens` — **멱등** (재전송 시 교체, 누적 금지) — A-6~A-8
-- [ ] **1-8** 🔴 `POST /api/sessions/:id/finish` — **재계산 금지** (두 번 호출 시 동일 응답) — A-9, A-10
+- [x] **1-5** `POST /api/sessions` · `GET /api/sessions/:id` — A-1~A-3, A-11~A-12
+- [x] **1-6** `POST /api/sessions/:id/rounds` (카드 뽑기 + 입장 배정 원자적) — A-4, A-5
+- [x] **1-7** 🔴 `POST /api/rounds/:id/tokens` — **멱등** — A-6~A-8
+  - DB 검증: 같은 payload 두 번 → 토큰 합 3 (6이 아님) ✅
+- [x] **1-8** 🔴 `POST /api/sessions/:id/finish` — **재계산 금지** — A-9, A-10
+  - DB 검증: 두 번 호출 → 결과 1행, 첫 엔딩 고정 ✅
+- [ ] ⛔ 위 4개를 **실제 HTTP 요청으로** 재확인 (service_role 키 필요)
 
 ### 화면
 
