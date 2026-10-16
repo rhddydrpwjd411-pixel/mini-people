@@ -3,7 +3,7 @@ import { db } from '@/lib/supabase'
 import type { IssueCard } from '@/lib/types'
 
 /** DB row(snake_case) → 앱 타입(camelCase) */
-type CardRow = {
+export type CardRow = {
   id: string
   title: string
   body: string | null

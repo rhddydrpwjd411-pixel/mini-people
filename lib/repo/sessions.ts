@@ -4,10 +4,27 @@ import type {
   SessionResult,
   SessionRound,
   SessionState,
+  SessionStatus,
+  Stance,
   StanceMap,
   TokenAward,
 } from '@/lib/types'
-import { toCard } from './cards'
+import { toCard, type CardRow } from './cards'
+
+/** getSessionState 의 중첩 select 결과 형태 */
+type SessionRow = {
+  id: string
+  player_count: number
+  round_total: number
+  status: SessionStatus
+  session_rounds: {
+    id: string
+    round_no: number
+    issue_cards: CardRow
+    round_stances: { player_slot: number; stance: Stance }[]
+    token_awards: { from_slot: number; to_slot: number; count: number }[]
+  }[]
+}
 
 export async function createSession(playerCount: number, roundTotal: number): Promise<string> {
   const { data, error } = await db
@@ -43,25 +60,19 @@ export async function getSessionState(sessionId: string): Promise<SessionState> 
   if (error) throw new AppError('INTERNAL', `세션 조회 실패: ${error.message}`)
   if (!data) throw new AppError('SESSION_NOT_FOUND', '세션을 찾을 수 없습니다.')
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const raw = data as any
+  const raw = data as unknown as SessionRow
 
-  const rounds: SessionRound[] = (raw.session_rounds ?? [])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .sort((a: any, b: any) => a.round_no - b.round_no)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    .map((r: any): SessionRound => {
+  const rounds: SessionRound[] = [...(raw.session_rounds ?? [])]
+    .sort((a, b) => a.round_no - b.round_no)
+    .map((r): SessionRound => {
       const stances: StanceMap = {}
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       for (const s of r.round_stances ?? []) stances[s.player_slot] = s.stance
 
-      const awards: TokenAward[] = (r.token_awards ?? []).map(
-        (a: { from_slot: number; to_slot: number; count: number }): TokenAward => ({
-          fromSlot: a.from_slot,
-          toSlot: a.to_slot,
-          count: a.count,
-        }),
-      )
+      const awards: TokenAward[] = (r.token_awards ?? []).map((a) => ({
+        fromSlot: a.from_slot,
+        toSlot: a.to_slot,
+        count: a.count,
+      }))
 
       return { id: r.id, roundNo: r.round_no, card: toCard(r.issue_cards), stances, awards }
     })

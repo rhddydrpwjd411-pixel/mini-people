@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * 🔴 서버 전용 Supabase 클라이언트.
@@ -21,8 +21,28 @@ function required(name: string): string {
   return value
 }
 
-export const db = createClient(
-  required('SUPABASE_URL'),
-  required('SUPABASE_SERVICE_ROLE_KEY'),
-  { auth: { persistSession: false, autoRefreshToken: false } },
-)
+let cached: SupabaseClient | null = null
+
+function client(): SupabaseClient {
+  if (!cached) {
+    cached = createClient(required('SUPABASE_URL'), required('SUPABASE_SERVICE_ROLE_KEY'), {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+  }
+  return cached
+}
+
+/**
+ * 지연 초기화 프록시.
+ *
+ * 모듈 최상단에서 환경변수를 검사하면 `next build` 가 라우트 모듈을 읽는
+ * 단계에서 터진다. 키가 아직 없는 상태로도 빌드는 되어야 하므로, 검사를
+ * 실제 DB 호출 시점까지 늦춘다. 호출 시점에 키가 없으면 그때 명확히 실패한다.
+ */
+export const db: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    const instance = client()
+    const value = Reflect.get(instance, prop) as unknown
+    return typeof value === 'function' ? value.bind(instance) : value
+  },
+})
