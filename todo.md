@@ -9,8 +9,11 @@
 **현재 Phase: P0 (기반)** · **다음 게이트: 10/23 1차 제품 검수 (D-7)**
 
 ```
-진행률  P0 ░░░░░░░░░░ 0/7   P1 ░░░░░░░░░░ 0/15
+진행률  P0 ███████░░░ 5/7   P1 ███░░░░░░░ 4/15
 ```
+
+개발 환경: Node 24.20.0 · npm 11.19.0 · git 2.55.0 · Next 15.5.28 · Vitest 5.0.5
+테스트: **43개 통과** (`npm test`) · typecheck · lint 통과
 
 ---
 
@@ -18,62 +21,81 @@
 
 | 항목 | 누가 풀어야 하나 | 기한 |
 |---|---|---|
+| 🔴 **Supabase 프로젝트 생성** — 이게 없으면 1-5 이후(API·화면) 전체가 막힌다 | 개발 리드 | **즉시** |
 | **역할 분담 미정** — 전담 개발자 없음 (plan §9) | 팀 전체 | **10/17** |
+| Vercel 계정 연결 (0-6) | 개발 리드 | 10/18 |
 | 5번째 조원 이름 확인 | 팀 전체 | 10/17 |
-| Supabase 프로젝트 생성 계정 (누구 계정으로?) | 개발 리드 | 10/16 |
 | 캠페인 데이터 확보 경로 (유난무브먼트) | — | 12/1까지 |
 | 임팩트 설문 문항 확정 | 팀 전체 | 12/1까지 |
 
----
+### Supabase 막힘을 푸는 방법
 
-## P0 — 기반 (10/16 ~ 10/18) · 0/7
-
-- [ ] **0-1** Next.js 15 + TypeScript + Tailwind 초기화, 이 리포에 커밋
-- [ ] **0-2** Supabase 프로젝트 생성 · `.env.local` · `.env.example` 작성
-- [ ] **0-3** 마이그레이션 `0001_init.sql` — 테이블 8 + enum 3 (design §2)
-  - [ ] `issue_cards` / `card_generation_runs`
-  - [ ] `game_sessions` / `session_rounds` / `round_stances` / `token_awards`
-  - [ ] `session_results` / `evidence_queries`
-  - [ ] enum `card_status` / `stance`
-- [ ] **0-4** RLS 전면 거부 + `lib/supabase.ts` (service_role, 서버 전용)
-- [ ] **0-5** 🔴 **이슈 카드 20장 수동 작성·입력** ← 개발과 병렬, 코드 불필요
-  - [ ] 카테고리 분산 (노동·주거·교육·환경·기술·젠더·세대)
-  - [ ] 각 카드에 `pro_hint` · `con_hint` 둘 다 채움
-  - [ ] 정당·실존 인물 언급 0건
-  - [ ] 전문 지식 없이 말할 수 있는 수준인지 조원 1명이 교차 확인
-- [ ] **0-6** Vercel 연결 · Preview 배포 확인
-- [ ] **0-7** Vitest 세팅 (`npm test` 동작)
-
-**완료 조건**: `select count(*) from issue_cards where status='active'` → 20
+1. [supabase.com](https://supabase.com) 에서 프로젝트 생성 (무료 티어)
+2. Settings → API 에서 `Project URL` 과 `service_role` 키 복사
+3. `.env.example` 을 복사해 `.env.local` 을 만들고 값 붙여넣기
+4. `supabase/migrations/0001_init.sql` → `0002_seed_cards.sql` 순서로 SQL Editor 에서 실행
+5. `select count(*) from issue_cards where status='active'` → **20** 이면 P0 완료
 
 ---
 
-## P1 — 플레이 루프 (10/19 ~ 10/22) · 0/15 ⭐ 최우선
+## P0 — 기반 (10/16 ~ 10/18) · 5/7
 
-### 순수 함수 먼저 (design §11 제약 2)
+- [x] **0-1** Next.js 15 + TypeScript + Tailwind 초기화, 이 리포에 커밋
+- [~] **0-2** Supabase 프로젝트 생성 · `.env.local` · `.env.example` 작성
+  - [x] `.env.example` 작성 (키 6개, `NEXT_PUBLIC_` 은 BASE_URL 하나뿐)
+  - [ ] ⛔ Supabase 프로젝트 생성 — **팀 계정 필요**
+  - [ ] ⛔ `.env.local` 값 채우기
+- [x] **0-3** 마이그레이션 `0001_init.sql` — 테이블 8 + enum 2 (design §2)
+  - [x] `issue_cards` / `card_generation_runs`
+  - [x] `game_sessions` / `session_rounds` / `round_stances` / `token_awards`
+  - [x] `session_results` / `evidence_queries`
+  - [x] enum `card_status` / `stance`
+        ※ 이 문서에 "enum 3"으로 적혀 있었으나 design.md 기준은 2개다. design.md 를 따랐다.
+- [x] **0-4** RLS 전면 거부 + `lib/supabase.ts` (service_role, 서버 전용)
+  - [x] 8개 테이블 모두 `enable row level security`, 정책 미생성 = anon 전면 거부
+  - [x] `lib/supabase.ts` 에 브라우저 import 차단 가드 추가
+- [x] **0-5** 🔴 **이슈 카드 20장 수동 작성** (`0002_seed_cards.sql`)
+  - [x] 카테고리 분산 — 노동 3 · 주거 2 · 교육 2 · 환경 3 · 기술 3 · 젠더 2 · 세대 2 · 생활 3
+  - [x] 각 카드에 `pro_hint` · `con_hint` 둘 다 채움
+  - [x] 정당·실존 인물 언급 0건
+  - [ ] 전문 지식 없이 말할 수 있는 수준인지 **조원 1명이 교차 확인** ← 사람이 해야 함
+  - [ ] ⛔ DB 입력 (Supabase 생성 후)
+- [ ] **0-6** ⛔ Vercel 연결 · Preview 배포 확인 — **팀 계정 필요**
+- [x] **0-7** Vitest 세팅 (`npm test` 동작, 43개 통과)
 
-- [ ] **1-1** `lib/game/stance.ts` 입장 배정
-  - [ ] 찬/반 균등 분배 (3~5인)
-  - [ ] 🔴 한쪽 0명 배정 금지 — **S-4** (1000회 반복 테스트)
-  - [ ] 라운드마다 다수 쪽 교대 — S-5
-  - [ ] 직전 라운드 동일 입장 회피 — S-6
-  - [ ] 테스트 S-1 ~ S-8 통과
-- [ ] **1-2** `lib/game/draw.ts` 카드 뽑기
-  - [ ] 세션 내 중복 방지 — D-1
-  - [ ] `use_count` 낮은 것 우선 — D-2
-  - [ ] 🔴 `active`만 뽑기 — **D-3** (검수 안 된 카드 노출 금지)
-  - [ ] 카드 부족 시 throw — D-4
-- [ ] **1-3** `lib/game/score.ts` 점수 집계
-  - [ ] `received` / `given`
-  - [ ] 🔴 `balance = min(received, given)` — **C-3 / C-4**
-  - [ ] 칭호 3종 (설득자 · 열린 귀 · 광장의 시민) — C-7 ~ C-10
-- [ ] **1-4** `lib/game/ending.ts` 엔딩 판정
-  - [ ] 4개 엔딩 판정식 (design §5)
-  - [ ] 🔴 판정 순서 — `each_others_seat` 가 `night_of_persuasion` 보다 먼저 — **E-4**
-  - [ ] 경계값 E-7 (`T == N`) · E-8 (`topShare == 0.5`)
-  - [ ] T=0 에서 0으로 나누기 없음 — E-2
+**완료 조건**: `select count(*) from issue_cards where status='active'` → 20 (DB 생성 후 확인)
 
-### API
+---
+
+## P1 — 플레이 루프 (10/19 ~ 10/22) · 4/15 ⭐ 최우선
+
+### 순수 함수 먼저 (design §11 제약 2) — ✅ 완료
+
+- [x] **1-1** `lib/game/stance.ts` 입장 배정
+  - [x] 찬/반 균등 분배 (3~5인)
+  - [x] 🔴 한쪽 0명 배정 금지 — **S-4** (3~5인 × 1000회 반복 통과)
+  - [x] 라운드마다 다수 쪽 교대 — S-5
+  - [x] 직전 라운드 동일 입장 회피 — S-6 (실측 동일 입장 비율 0%)
+  - [x] 테스트 S-1 ~ S-8 통과
+- [x] **1-2** `lib/game/draw.ts` 카드 뽑기
+  - [x] 세션 내 중복 방지 — D-1
+  - [x] `use_count` 낮은 것 우선 — D-2
+  - [x] 🔴 `active`만 뽑기 — **D-3** (검수 안 된 카드 노출 금지)
+  - [x] 카드 부족 시 throw — D-4 + `assertEnoughCards`
+  - [ ] ⛔ D-5 `use_count` 1 증가 — DB 연동 필요 (1-6에서)
+- [x] **1-3** `lib/game/score.ts` 점수 집계
+  - [x] `received` / `given`
+  - [x] 🔴 `balance = min(received, given)` — **C-3 / C-4**
+  - [x] 칭호 3종 (설득자 · 열린 귀 · 광장의 시민) — C-7 ~ C-10
+  - [x] 🐛 조합 중복 검사가 세션 전체 집계에 걸려 2라운드부터 정상 입력을 거부하던 버그 수정
+        → `validateAwards`(라운드 범위) / `validateAwardValues`(값만) 분리 + 회귀 테스트
+- [x] **1-4** `lib/game/ending.ts` 엔딩 판정
+  - [x] 4개 엔딩 판정식 (design §5)
+  - [x] 🔴 판정 순서 — `each_others_seat` 가 `night_of_persuasion` 보다 먼저 — **E-4**
+  - [x] 경계값 E-7 (`T == N`) · E-8 (`topShare == 0.5`)
+  - [x] T=0 에서 0으로 나누기 없음 — E-2
+
+### API — ⛔ Supabase 프로젝트 생성 후 착수 (전부 DB 의존)
 
 - [ ] **1-5** `POST /api/sessions` · `GET /api/sessions/:id` — A-1~A-3, A-11~A-12
 - [ ] **1-6** `POST /api/sessions/:id/rounds` (카드 뽑기 + 입장 배정 원자적) — A-4, A-5
